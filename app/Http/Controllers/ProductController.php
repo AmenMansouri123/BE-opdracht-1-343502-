@@ -22,26 +22,47 @@ class ProductController extends Controller
     }
 
     public function leveringInfo($id)
-    {
-        $leveringen = DB::select("
-            SELECT
-                ppl.DatumLevering,
-                ppl.Aantal,
-                ppl.DatumEerstVolgendeLevering,
-                l.Naam AS LeverancierNaam,
-                l.ContactPersoon,
-                l.LeverancierNummer,
-                l.Mobiel,
-                p.Naam AS ProductNaam
-            FROM ProductPerLeverancier ppl
-            INNER JOIN Leverancier l
-                ON ppl.LeverancierId = l.Id
-            INNER JOIN Product p
-                ON ppl.ProductId = p.Id
-            WHERE ppl.ProductId = ?
-            ORDER BY ppl.DatumLevering ASC
-        ", [$id]);
+{
+    // Controleer eerst hoeveel voorraad er van het product aanwezig is
+    $magazijn = DB::selectOne("
+        SELECT
+            m.AantalAanwezig,
+            ppl.DatumEerstVolgendeLevering
+        FROM Magazijn m
+        INNER JOIN ProductPerLeverancier ppl
+            ON m.ProductId = ppl.ProductId
+        WHERE m.ProductId = ?
+        ORDER BY ppl.DatumLevering DESC
+        LIMIT 1
+    ", [$id]);
 
-        return view('producten.levering-info', compact('leveringen'));
+    // Als er geen voorraad aanwezig is, toon de pagina Geen Voorraad
+    if ($magazijn && is_null($magazijn->AantalAanwezig)) {
+        return view('producten.geen-voorraad', compact('magazijn'));
+    }
+
+    // Haal alle leveringsinformatie van het gekozen product op
+    $leveringen = DB::select("
+        SELECT
+            ppl.DatumLevering,
+            ppl.Aantal,
+            ppl.DatumEerstVolgendeLevering,
+            l.Naam AS LeverancierNaam,
+            l.ContactPersoon,
+            l.LeverancierNummer,
+            l.Mobiel,
+            p.Naam AS ProductNaam
+        FROM ProductPerLeverancier ppl
+        INNER JOIN Leverancier l
+            ON ppl.LeverancierId = l.Id
+        INNER JOIN Product p
+            ON ppl.ProductId = p.Id
+        WHERE ppl.ProductId = ?
+        ORDER BY ppl.DatumLevering ASC
+    ", [$id]);
+
+    // Stuur de leveringsgegevens naar de view
+    return view('producten.levering-info', compact('leveringen'));
     }
 }
+
