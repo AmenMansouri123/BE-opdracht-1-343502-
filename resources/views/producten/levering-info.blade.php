@@ -46,10 +46,12 @@
             <tbody>
                 @foreach ($leveringen as $levering)
                     <tr>
-                        <td>{{ $levering->DatumLevering }}</td>
+                        <td>{{ \Carbon\Carbon::parse($levering->DatumLevering)->format('d-m-Y') }}</td>
                         <td>{{ $levering->Aantal }}</td>
                         <td>
-                            {{ $levering->DatumEerstVolgendeLevering ?? 'Geen datum bekend' }}
+                            {{ $levering->DatumEerstVolgendeLevering
+    ? \Carbon\Carbon::parse($levering->DatumEerstVolgendeLevering)->format('d-m-Y')
+    : 'Geen datum bekend' }}
                         </td>
                     </tr>
                 @endforeach
