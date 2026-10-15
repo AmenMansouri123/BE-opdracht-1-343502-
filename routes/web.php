@@ -24,4 +24,7 @@ Route::get('/producten', [ProductController::class, 'index'])
 Route::get('/producten/{id}/levering-info', [ProductController::class, 'leveringInfo'])
     ->name('producten.leveringInfo');
 
+Route::get('/producten/{id}/allergenen-info', [ProductController::class, 'allergenenInfo'])
+    ->name('producten.allergenenInfo');
+
 require __DIR__.'/auth.php';

@@ -64,5 +64,34 @@ class ProductController extends Controller
     // Stuur de leveringsgegevens naar de view
     return view('producten.levering-info', compact('leveringen'));
     }
-}
 
+
+
+public function allergenenInfo($id)
+{
+    // Haal het gekozen product op
+    $product = DB::selectOne("
+        SELECT
+            Id,
+            Naam,
+            Barcode
+        FROM Product
+        WHERE Id = ?
+    ", [$id]);
+
+    // Haal alle allergenen van het gekozen product op
+    $allergenen = DB::select("
+        SELECT
+            a.Naam,
+            a.Omschrijving
+        FROM ProductPerAllergeen ppa
+        INNER JOIN Allergeen a
+            ON ppa.AllergeenId = a.Id
+        WHERE ppa.ProductId = ?
+        ORDER BY a.Naam ASC
+    ", [$id]);
+
+    // Stuur de gegevens naar de view
+    return view('producten.allergenen-info', compact('product', 'allergenen'));
+}
+}
