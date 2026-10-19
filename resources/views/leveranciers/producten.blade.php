@@ -4,6 +4,11 @@
         <h2 class="font-semibold text-xl text-gray-800">
             Geleverde producten
         </h2>
+        @if(session('success'))
+    <div class="bg-green-100 text-green-700 p-4 rounded mb-5">
+        {{ session('success') }}
+    </div>
+@endif
     </x-slot>
 
     <div class="py-12">
@@ -68,9 +73,14 @@
 
                                     <td class="border p-3">
                                         <!-- Knop voor User Story 2 -->
-                                        <span class="text-blue-600 text-xl font-bold">
-                                            +
-                                        </span>
+                                        <a href="{{ route('leveranciers.levering.create', [
+    'leverancierId' => $leverancier->Id,
+    'productId' => $product->Id
+]) }}"
+   class="text-blue-600 text-xl font-bold"
+   title="Nieuwe levering">
+    +
+</a>
                                     </td>
                                 </tr>
                             @empty

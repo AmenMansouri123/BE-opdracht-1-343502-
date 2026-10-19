@@ -1,4 +1,3 @@
-
 <?php
 
 use App\Http\Controllers\LeverancierController;
@@ -80,7 +79,7 @@ Route::middleware('auth')->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | Overzicht Leveranciers - User Story 1
+    | User Story 1 - Overzicht Leveranciers
     |--------------------------------------------------------------------------
     */
 
@@ -90,13 +89,33 @@ Route::middleware('auth')->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | Geleverde producten - Scenario 01 en 02
+    | User Story 1 - Geleverde producten
     |--------------------------------------------------------------------------
     */
 
     Route::get('/leveranciers/{id}/producten',
         [LeverancierController::class, 'producten'])
         ->name('leveranciers.producten');
+
+    /*
+    |--------------------------------------------------------------------------
+    | User Story 2 - Levering product formulier
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/leveranciers/{leverancierId}/producten/{productId}/levering',
+        [LeverancierController::class, 'createLevering'])
+        ->name('leveranciers.levering.create');
+
+    /*
+    |--------------------------------------------------------------------------
+    | User Story 2 - Nieuwe levering opslaan
+    |--------------------------------------------------------------------------
+    */
+
+    Route::post('/leveranciers/{leverancierId}/producten/{productId}/levering',
+        [LeverancierController::class, 'storeLevering'])
+        ->name('leveranciers.levering.store');
 
 });
 
