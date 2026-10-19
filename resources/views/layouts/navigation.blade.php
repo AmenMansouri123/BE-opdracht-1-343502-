@@ -30,6 +30,10 @@
                         Overzicht Magazijn
                     </x-nav-link>
 
+                    <x-nav-link :href="url('/leveranciers')" :active="request()->is('leveranciers*')">
+    {{ __('Overzicht Leveranciers') }}
+</x-nav-link>
+
                 </div>
 
             </div>
