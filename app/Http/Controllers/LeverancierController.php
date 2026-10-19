@@ -8,13 +8,13 @@ class LeverancierController extends Controller
 {
     /*
     |--------------------------------------------------------------------------
-    | Overzicht Leveranciers
+    | User Story 1 - Overzicht Leveranciers
     |--------------------------------------------------------------------------
     */
 
     public function index()
     {
-        // Alle leveranciers ophalen met aantal verschillende producten
+        // Alle leveranciers met aantal verschillende producten
         $leveranciers = DB::table('leverancier as l')
             ->leftJoin(
                 'productperleverancier as ppl',
@@ -29,7 +29,9 @@ class LeverancierController extends Controller
                 'l.LeverancierNummer',
                 'l.Mobiel'
             )
-            ->selectRaw('COUNT(DISTINCT ppl.ProductId) as AantalProducten')
+            ->selectRaw(
+                'COUNT(DISTINCT ppl.ProductId) as AantalProducten'
+            )
             ->groupBy(
                 'l.Id',
                 'l.Naam',
@@ -45,7 +47,7 @@ class LeverancierController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | Geleverde producten van een leverancier
+    | User Story 1 - Geleverde producten
     |--------------------------------------------------------------------------
     */
 
@@ -56,12 +58,11 @@ class LeverancierController extends Controller
             ->where('Id', $id)
             ->first();
 
-        // Controleer of leverancier bestaat
         if (!$leverancier) {
             abort(404);
         }
 
-        // Producten van deze leverancier ophalen
+        // Producten ophalen die deze leverancier levert
         $producten = DB::table('productperleverancier as ppl')
             ->join(
                 'product as p',
@@ -82,7 +83,9 @@ class LeverancierController extends Controller
                 'm.VerpakkingsEenheid',
                 'm.AantalAanwezig'
             )
-            ->selectRaw('MAX(ppl.DatumLevering) as LaatsteLevering')
+            ->selectRaw(
+                'MAX(ppl.DatumLevering) as LaatsteLevering'
+            )
             ->groupBy(
                 'p.Id',
                 'p.Naam',
@@ -95,6 +98,51 @@ class LeverancierController extends Controller
         return view('leveranciers.producten', compact(
             'leverancier',
             'producten'
+        ));
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | User Story 2 - Levering product
+    |--------------------------------------------------------------------------
+    */
+
+    public function createLevering($leverancierId, $productId)
+    {
+        // Leverancier ophalen
+        $leverancier = DB::table('leverancier')
+            ->where('Id', $leverancierId)
+            ->first();
+
+        if (!$leverancier) {
+            abort(404);
+        }
+
+        // Product ophalen bij de gekozen leverancier
+        $product = DB::table('productperleverancier as ppl')
+            ->join(
+                'product as p',
+                'p.Id',
+                '=',
+                'ppl.ProductId'
+            )
+            ->where('ppl.LeverancierId', $leverancierId)
+            ->where('ppl.ProductId', $productId)
+            ->select(
+                'p.Id',
+                'p.Naam',
+                'p.IsActief'
+            )
+            ->first();
+
+        if (!$product) {
+            abort(404);
+        }
+
+        // Formulier voor nieuwe levering tonen
+        return view('leveranciers.levering', compact(
+            'leverancier',
+            'product'
         ));
     }
 }
