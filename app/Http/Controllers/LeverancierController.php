@@ -15,30 +15,43 @@ class LeverancierController extends Controller
 
     public function index()
     {
-        $leveranciers = DB::table('leverancier as l')
-            ->leftJoin(
-                'productperleverancier as ppl',
-                'l.Id',
-                '=',
-                'ppl.LeverancierId'
-            )
-            ->select(
-                'l.Id',
-                'l.Naam',
-                'l.ContactPersoon',
-                'l.LeverancierNummer',
-                'l.Mobiel'
-            )
-            ->selectRaw('COUNT(DISTINCT ppl.ProductId) as AantalProducten')
-            ->groupBy(
-                'l.Id',
-                'l.Naam',
-                'l.ContactPersoon',
-                'l.LeverancierNummer',
-                'l.Mobiel'
-            )
-            ->orderByDesc('AantalProducten')
-            ->get();
+        // MySQL gebruikt de Stored Procedure
+        if (DB::connection()->getDriverName() === 'mysql') {
+
+            $leveranciers = collect(
+                DB::select('CALL GetLeveranciersOverzicht()')
+            );
+
+        } else {
+
+            // SQLite voor automatische tests
+            $leveranciers = DB::table('leverancier as l')
+                ->leftJoin(
+                    'productperleverancier as ppl',
+                    'l.Id',
+                    '=',
+                    'ppl.LeverancierId'
+                )
+                ->select(
+                    'l.Id',
+                    'l.Naam',
+                    'l.ContactPersoon',
+                    'l.LeverancierNummer',
+                    'l.Mobiel'
+                )
+                ->selectRaw(
+                    'COUNT(DISTINCT ppl.ProductId) as AantalProducten'
+                )
+                ->groupBy(
+                    'l.Id',
+                    'l.Naam',
+                    'l.ContactPersoon',
+                    'l.LeverancierNummer',
+                    'l.Mobiel'
+                )
+                ->orderByDesc('AantalProducten')
+                ->get();
+        }
 
         return view('leveranciers.index', compact('leveranciers'));
     }
@@ -51,6 +64,7 @@ class LeverancierController extends Controller
 
     public function producten($id)
     {
+        // Leverancier ophalen
         $leverancier = DB::table('leverancier')
             ->where('Id', $id)
             ->first();
@@ -59,25 +73,48 @@ class LeverancierController extends Controller
             abort(404);
         }
 
-        $producten = DB::table('productperleverancier as ppl')
-            ->join('product as p', 'ppl.ProductId', '=', 'p.Id')
-            ->leftJoin('magazijn as m', 'p.Id', '=', 'm.ProductId')
-            ->where('ppl.LeverancierId', $id)
-            ->select(
-                'p.Id',
-                'p.Naam',
-                'm.VerpakkingsEenheid',
-                'm.AantalAanwezig'
-            )
-            ->selectRaw('MAX(ppl.DatumLevering) as LaatsteLevering')
-            ->groupBy(
-                'p.Id',
-                'p.Naam',
-                'm.VerpakkingsEenheid',
-                'm.AantalAanwezig'
-            )
-            ->orderByDesc('m.AantalAanwezig')
-            ->get();
+        // MySQL gebruikt de Stored Procedure
+        if (DB::connection()->getDriverName() === 'mysql') {
+
+            $producten = collect(
+                DB::select('CALL GetGeleverdeProducten(?)', [$id])
+            );
+
+        } else {
+
+            // SQLite voor automatische tests
+            $producten = DB::table('productperleverancier as ppl')
+                ->join(
+                    'product as p',
+                    'ppl.ProductId',
+                    '=',
+                    'p.Id'
+                )
+                ->leftJoin(
+                    'magazijn as m',
+                    'p.Id',
+                    '=',
+                    'm.ProductId'
+                )
+                ->where('ppl.LeverancierId', $id)
+                ->select(
+                    'p.Id',
+                    'p.Naam',
+                    'm.VerpakkingsEenheid',
+                    'm.AantalAanwezig'
+                )
+                ->selectRaw(
+                    'MAX(ppl.DatumLevering) as LaatsteLevering'
+                )
+                ->groupBy(
+                    'p.Id',
+                    'p.Naam',
+                    'm.VerpakkingsEenheid',
+                    'm.AantalAanwezig'
+                )
+                ->orderByDesc('m.AantalAanwezig')
+                ->get();
+        }
 
         return view('leveranciers.producten', compact(
             'leverancier',
@@ -93,6 +130,7 @@ class LeverancierController extends Controller
 
     public function createLevering($leverancierId, $productId)
     {
+        // Leverancier ophalen
         $leverancier = DB::table('leverancier')
             ->where('Id', $leverancierId)
             ->first();
@@ -101,11 +139,21 @@ class LeverancierController extends Controller
             abort(404);
         }
 
+        // Product ophalen bij de gekozen leverancier
         $product = DB::table('productperleverancier as ppl')
-            ->join('product as p', 'p.Id', '=', 'ppl.ProductId')
+            ->join(
+                'product as p',
+                'p.Id',
+                '=',
+                'ppl.ProductId'
+            )
             ->where('ppl.LeverancierId', $leverancierId)
             ->where('ppl.ProductId', $productId)
-            ->select('p.Id', 'p.Naam', 'p.IsActief')
+            ->select(
+                'p.Id',
+                'p.Naam',
+                'p.IsActief'
+            )
             ->first();
 
         if (!$product) {
@@ -135,13 +183,14 @@ class LeverancierController extends Controller
             'datum' => ['required', 'date'],
         ]);
 
-        // Alle wijzigingen binnen één transactie
+        // Wijzigingen uitvoeren binnen één transactie
         $resultaat = DB::transaction(function () use (
             $leverancierId,
             $productId,
             $gegevens
         ) {
-            // Product controleren en vergrendelen
+
+            // Product ophalen en vergrendelen
             $product = DB::table('product')
                 ->where('Id', $productId)
                 ->lockForUpdate()
@@ -151,7 +200,7 @@ class LeverancierController extends Controller
                 abort(404);
             }
 
-            // Controleren of leverancier dit product levert
+            // Controleren of leverancier het product levert
             $levering = DB::table('productperleverancier')
                 ->where('LeverancierId', $leverancierId)
                 ->where('ProductId', $productId)
@@ -167,7 +216,7 @@ class LeverancierController extends Controller
                 return 'inactief';
             }
 
-            // Magazijnrecord ophalen
+            // Magazijnrecord ophalen en vergrendelen
             $magazijn = DB::table('magazijn')
                 ->where('ProductId', $productId)
                 ->lockForUpdate()
@@ -179,7 +228,7 @@ class LeverancierController extends Controller
 
             $nu = now();
 
-            // Voorraad verhogen
+            // Nieuwe levering toevoegen aan voorraad
             DB::table('magazijn')
                 ->where('Id', $magazijn->Id)
                 ->update([
@@ -201,8 +250,9 @@ class LeverancierController extends Controller
             return 'opgeslagen';
         });
 
-        // Inactief product: foutmelding tonen
+        // Scenario 02: Product wordt niet meer geproduceerd
         if ($resultaat === 'inactief') {
+
             $product = DB::table('product')
                 ->where('Id', $productId)
                 ->first();
@@ -213,9 +263,12 @@ class LeverancierController extends Controller
             ]);
         }
 
-        // Terug naar geleverde producten
+        // Scenario 01: Levering succesvol opgeslagen
         return redirect()
             ->route('leveranciers.producten', $leverancierId)
-            ->with('success', 'De nieuwe levering is opgeslagen.');
+            ->with(
+                'success',
+                'De nieuwe levering is opgeslagen.'
+            );
     }
 }
