@@ -34,7 +34,12 @@ Route::get('/dashboard', [ProductController::class, 'dashboard'])
 
 Route::middleware('auth')->group(function () {
 
-    // Profile
+    /*
+    |--------------------------------------------------------------------------
+    | Profile
+    |--------------------------------------------------------------------------
+    */
+
     Route::get('/profile', [ProfileController::class, 'edit'])
         ->name('profile.edit');
 
@@ -44,21 +49,54 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])
         ->name('profile.destroy');
 
-    // Magazijn overzicht
+    /*
+    |--------------------------------------------------------------------------
+    | Magazijn overzicht
+    |--------------------------------------------------------------------------
+    */
+
     Route::get('/producten', [ProductController::class, 'index'])
         ->name('producten.index');
 
-    // Leverantie informatie
-    Route::get('/producten/{id}/levering-info', [ProductController::class, 'leveringInfo'])
+    /*
+    |--------------------------------------------------------------------------
+    | Leverantie informatie
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/producten/{id}/levering-info',
+        [ProductController::class, 'leveringInfo'])
         ->name('producten.leveringInfo');
 
-    // Allergenen informatie
-    Route::get('/producten/{id}/allergenen-info', [ProductController::class, 'allergenenInfo'])
+    /*
+    |--------------------------------------------------------------------------
+    | Allergenen informatie
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/producten/{id}/allergenen-info',
+        [ProductController::class, 'allergenenInfo'])
         ->name('producten.allergenenInfo');
 
-    // Overzicht Leveranciers
-    Route::get('/leveranciers', [LeverancierController::class, 'index'])
+    /*
+    |--------------------------------------------------------------------------
+    | Overzicht Leveranciers - User Story 1
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/leveranciers',
+        [LeverancierController::class, 'index'])
         ->name('leveranciers.index');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Geleverde producten - Scenario 01 en 02
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/leveranciers/{id}/producten',
+        [LeverancierController::class, 'producten'])
+        ->name('leveranciers.producten');
 
 });
 
