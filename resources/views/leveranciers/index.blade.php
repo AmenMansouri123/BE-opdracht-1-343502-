@@ -33,7 +33,14 @@
                                 <td>{{ $leverancier->LeverancierNummer }}</td>
                                 <td>{{ $leverancier->Mobiel }}</td>
                                 <td>{{ $leverancier->AantalProducten }}</td>
-                                <td>□</td>
+                                <td>
+    <a href="{{ route('leveranciers.producten', $leverancier->Id) }}"
+       title="Toon producten"
+       class="text-blue-600 font-bold">
+        <icon name="box" />
+        &#9633;
+    </a>
+</td>
                             </tr>
                         @endforeach
                     </tbody>
