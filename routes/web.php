@@ -1,5 +1,7 @@
+
 <?php
 
+use App\Http\Controllers\LeverancierController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
@@ -14,7 +16,6 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-
 /*
 |--------------------------------------------------------------------------
 | Dashboard
@@ -25,7 +26,6 @@ Route::get('/dashboard', [ProductController::class, 'dashboard'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
-
 /*
 |--------------------------------------------------------------------------
 | Routes voor ingelogde gebruikers
@@ -34,12 +34,7 @@ Route::get('/dashboard', [ProductController::class, 'dashboard'])
 
 Route::middleware('auth')->group(function () {
 
-    /*
-    |--------------------------------------------------------------------------
-    | Profile
-    |--------------------------------------------------------------------------
-    */
-
+    // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])
         ->name('profile.edit');
 
@@ -49,37 +44,23 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])
         ->name('profile.destroy');
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | Magazijn overzicht
-    |--------------------------------------------------------------------------
-    */
-
+    // Magazijn overzicht
     Route::get('/producten', [ProductController::class, 'index'])
         ->name('producten.index');
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | Leverantie informatie
-    |--------------------------------------------------------------------------
-    */
-
+    // Leverantie informatie
     Route::get('/producten/{id}/levering-info', [ProductController::class, 'leveringInfo'])
         ->name('producten.leveringInfo');
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | Allergenen informatie
-    |--------------------------------------------------------------------------
-    */
-
+    // Allergenen informatie
     Route::get('/producten/{id}/allergenen-info', [ProductController::class, 'allergenenInfo'])
         ->name('producten.allergenenInfo');
-});
 
+    // Overzicht Leveranciers
+    Route::get('/leveranciers', [LeverancierController::class, 'index'])
+        ->name('leveranciers.index');
+
+});
 
 /*
 |--------------------------------------------------------------------------
