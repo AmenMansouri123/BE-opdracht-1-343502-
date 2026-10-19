@@ -1,6 +1,5 @@
 
 -- User Story 2 - Nieuwe levering toevoegen
-
 DROP PROCEDURE IF EXISTS VoegNieuweLeveringToe;
 
 DELIMITER $$
